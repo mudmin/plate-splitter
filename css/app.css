@@ -93,6 +93,9 @@ input:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 
 .btn.primary:hover { filter: brightness(1.08); }
 .btn:disabled { opacity: .5; cursor: default; filter: none; border-color: var(--border); }
 .btn.wide { width: 100%; }
+a.btn { text-decoration: none; }
+label.btn { flex-direction: row; margin-bottom: 0; font-size: inherit; }
+.btn.donate svg { color: #e64980; }
 .btn.small { padding: 2px 8px; font-size: 12px; }
 .btn.icon { padding: 2px 7px; }
 

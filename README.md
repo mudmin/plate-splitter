@@ -4,6 +4,8 @@ A browser tool that cuts a flat STL (baseplates, jigs, panels) into pieces that 
 
 **Try it:** https://mudmin.github.io/plate-splitter/
 
+If it saves you a print or two, you can [support the project here](https://userspice.com/donate/).
+
 It runs entirely in the browser, with no build step and no server code. Your STL never leaves your computer. To host it yourself, serve the folder from any web server and open `index.html`. Opening it straight from disk (`file://`) won't work.
 
 ## Use
