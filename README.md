@@ -2,7 +2,9 @@
 
 A browser tool that cuts a flat STL (baseplates, jigs, panels) into pieces that fit your printer's bed. The pieces lock back together with dovetail ("keystone") joints.
 
-It runs entirely in the browser, with no build step and no server code. Serve the folder (it already lives under Apache at `/plate-splitter/`) and open `index.html`.
+**Try it:** https://mudmin.github.io/plate-splitter/
+
+It runs entirely in the browser, with no build step and no server code. Your STL never leaves your computer. To host it yourself, serve the folder from any web server and open `index.html`. Opening it straight from disk (`file://`) won't work.
 
 ## Use
 
@@ -38,3 +40,9 @@ A joint drawn in red is too close to an outside edge, a hole, or a crossing cut.
 - `js/printers.js`: printer bed presets. Add your own printers here.
 - `tools/make-sample.mjs`: regenerates the sample plate (`node tools/make-sample.mjs`).
 - `vendor/`: [manifold-3d](https://github.com/elalish/manifold) 3.5.1 for the booleans, three.js r185, and fflate 0.8.2 for the zip.
+
+## Hosting and license
+
+Every push to `main` deploys to GitHub Pages through `.github/workflows/pages.yml`, which publishes only the files the browser needs.
+
+Plate Splitter is MIT licensed (see `LICENSE`). The bundled libraries keep their own licenses, found in `vendor/`: three.js and fflate are MIT, and manifold-3d is Apache-2.0.
