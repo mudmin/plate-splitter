@@ -1,0 +1,17 @@
+# Plate Splitter: static files only.
+
+# WebAssembly must be served with the right type for streaming compile.
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+  AddType text/javascript .js .mjs
+</IfModule>
+
+# Always revalidate app files so an update is never mixed with stale cached copies.
+# (Needs mod_headers: sudo a2enmod headers && sudo systemctl reload apache2)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|css)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+Options -Indexes

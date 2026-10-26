@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plate Splitter</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.js" } }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 5h8v4.5l2-1 2 1V5h6v14h-6v-4.5l-2 1-2-1V19H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Plate Splitter</span>
+    </div>
+    <div class="topbar-actions">
+      <label class="btn primary" for="file-input">Open STL…</label>
+      <input id="file-input" type="file" accept=".stl" hidden>
+      <button class="btn" id="btn-sample" type="button">Load sample</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <section class="panel" id="panel-model">
+        <h2>Model</h2>
+        <div class="muted" id="model-info">No model loaded.</div>
+        <div class="row">
+          <label>Up axis
+            <select id="up-axis">
+              <option value="z">Z (default)</option>
+              <option value="y">Y</option>
+              <option value="x">X</option>
+            </select>
+          </label>
+          <label>File prefix
+            <input id="base-name" type="text" spellcheck="false" placeholder="blank">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Printer</h2>
+        <label>Preset
+          <select id="printer"></select>
+        </label>
+        <div class="row three">
+          <label>Bed X <input id="bed-w" type="number" min="50" step="1"></label>
+          <label>Bed Y <input id="bed-h" type="number" min="50" step="1"></label>
+          <label title="Kept clear around each piece for brim/skirt and bed clips">Margin <input id="bed-margin" type="number" min="0" step="1"></label>
+        </div>
+        <button class="btn wide" id="btn-auto" type="button">Auto-split for this bed</button>
+      </section>
+
+      <section class="panel">
+        <h2>Cuts</h2>
+        <div class="row">
+          <button class="btn" id="btn-add-x" type="button" title="Splits left / right">+ Vertical cut</button>
+          <button class="btn" id="btn-add-y" type="button" title="Splits upper / lower">+ Horizontal cut</button>
+        </div>
+        <div id="cut-list" class="cut-list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Joint</h2>
+        <label>Style
+          <select id="j-style">
+            <option value="dovetail">Dovetail (keystone)</option>
+            <option value="knob">Puzzle knob</option>
+            <option value="butterfly">Butterfly key (separate part)</option>
+            <option value="none">Straight cut (glue)</option>
+          </select>
+        </label>
+        <div class="row three" data-for="joint">
+          <label title="Width of the joint where it crosses the cut">Neck <input id="j-neck" type="number" min="2" step="0.5"></label>
+          <label title="Width at the widest point">Head <input id="j-head" type="number" min="2" step="0.5"></label>
+          <label title="How far it reaches across the cut">Depth <input id="j-depth" type="number" min="2" step="0.5"></label>
+        </div>
+        <div class="row three">
+          <label title="Total gap between mating faces. 0.2–0.4 mm suits most FDM printers.">Clearance <input id="j-clear" type="number" min="0" step="0.05"></label>
+          <label title="Rounds the joint corners so they print cleanly">Fillet <input id="j-radius" type="number" min="0" step="0.25"></label>
+          <label title="Minimum material kept around a joint">Wall <input id="j-wall" type="number" min="0" step="0.5"></label>
+        </div>
+        <div class="row" data-for="butterfly">
+          <label title="0 = full thickness">Key depth <input id="j-keydepth" type="number" min="0" step="0.5"></label>
+          <label>Sockets from
+            <select id="j-keyfrom">
+              <option value="bottom">Bottom</option>
+              <option value="top">Top</option>
+            </select>
+          </label>
+        </div>
+        <label class="check" data-for="joint"><input id="j-alt" type="checkbox"> Alternate joint direction</label>
+      </section>
+
+      <section class="panel">
+        <h2>Pieces</h2>
+        <div id="piece-list" class="piece-list"></div>
+        <button class="btn primary wide" id="btn-zip" type="button" disabled>Download all (.zip)</button>
+      </section>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-tabs">
+        <button type="button" class="tab active" data-view="plan">Plan</button>
+        <button type="button" class="tab" data-view="three">3D preview</button>
+      </div>
+      <div class="views">
+        <div class="view plan-view active" id="plan-wrap">
+          <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="hint" id="plan-hint">Drag a cut line to move it · drag a joint to slide it · double-click a cut to add a joint · select a joint and press F to flip or Delete to remove · scroll to zoom, drag empty space to pan</div>
+          <div class="drop-overlay" id="drop-overlay"><div>Drop an STL to load it</div></div>
+          <div class="empty" id="empty">
+            <div>
+              <p><strong>Open an STL</strong> or drop one here.</p>
+              <p class="muted">It gets split into bed-sized pieces with interlocking joints.</p>
+            </div>
+          </div>
+        </div>
+        <div class="view three-view" id="three-wrap">
+          <canvas id="three"></canvas>
+          <div class="empty" id="no-webgl" hidden>
+            <div>
+              <p><strong>3D preview unavailable</strong></p>
+              <p class="muted">Your browser blocked WebGL. In Brave, lower Shields' fingerprinting<br>protection for this site; otherwise turn on hardware acceleration.<br>Splitting and downloads still work.</p>
+            </div>
+          </div>
+          <div class="three-controls">
+            <label>Explode <input id="explode" type="range" min="0" max="40" value="12"></label>
+            <span class="busy" id="busy" hidden>Computing…</span>
+          </div>
+        </div>
+      </div>
+      <div class="status" id="status"></div>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
